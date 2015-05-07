@@ -73,6 +73,10 @@ module Gruff
     # By default, labels are centered over the point they represent.
     attr_accessor :center_labels_over_point
 
+    # The number of degrees to rotate the x-axis labels through. (Bar graph only)
+    # A positive value indicates a clockwise rotation.
+    attr_accessor :bottom_label_rotation
+
     # Used internally for horizontal graph types.
     attr_accessor :has_left_labels
 
@@ -247,6 +251,7 @@ module Gruff
       @has_data = false
       @data = Array.new
       @labels = Hash.new
+      @bottom_label_rotation = 0
       @labels_seen = Hash.new
       @sort = false
       @title = nil
@@ -568,8 +573,12 @@ module Gruff
             0
         @graph_right_margin = @right_margin + extra_room_for_long_label
 
+        room_for_bottom_labels = labels.values.map do |value|
+          calculate_bottom_label_height(value)
+        end.max || 0
+
         @graph_bottom_margin = @bottom_margin +
-            @marker_caps_height + LABEL_MARGIN
+            room_for_bottom_labels + LABEL_MARGIN
       end
 
       @graph_right = @raw_columns - @graph_right_margin
@@ -859,10 +868,15 @@ module Gruff
           @d.font_weight = NormalWeight
           @d.pointsize = scale_fontsize(@marker_font_size)
           @d.gravity = NorthGravity
+          if @bottom_label_rotation != 0
+            @d.rotation = @bottom_label_rotation
+            y_offset += calculate_bottom_label_height(label_text) / 2.0
+          end
           @d = @d.annotate_scaled(@base_image,
                                   1.0, 1.0,
                                   x_offset, y_offset,
                                   label_text, @scale)
+          @d.rotation = -@bottom_label_rotation if @bottom_label_rotation != 0
         end
         @labels_seen[index] = 1
         debug { @d.line 0.0, y_offset, @raw_columns, y_offset }
@@ -887,6 +901,7 @@ module Gruff
                               data_point.to_s, @scale)
 
       debug { @d.line 0.0, y_offset, @raw_columns, y_offset }
+
     end
 
     # Shows an error message because you have no data.
@@ -1133,6 +1148,16 @@ module Gruff
       @d.pointsize = font_size
       @d.font = @font if @font
       @d.get_type_metrics(@base_image, text.to_s).width
+    end
+
+
+    def calculate_bottom_label_height(label_text)
+      if @bottom_label_rotation == 0
+        @marker_caps_height
+      else
+        label_width = calculate_width(@marker_font_size, label_text)
+        label_width * Math.cos(deg2rad(@bottom_label_rotation))
+      end
     end
 
     # Used for degree => radian conversions
