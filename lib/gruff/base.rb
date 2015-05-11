@@ -573,10 +573,7 @@ module Gruff
             0
         @graph_right_margin = @right_margin + extra_room_for_long_label
 
-        room_for_bottom_labels = labels.values.map do |value|
-          calculate_bottom_label_height(value)
-        end.max || 0
-
+        room_for_bottom_labels = calculate_bottom_labels_height
         @graph_bottom_margin = @bottom_margin +
             room_for_bottom_labels + LABEL_MARGIN
       end
@@ -603,7 +600,7 @@ module Gruff
         # X Axis
         # Centered vertically and horizontally by setting the
         # height to 1.0 and the width to the width of the graph.
-        x_axis_label_y_coordinate = @graph_bottom + LABEL_MARGIN * 2 + @marker_caps_height
+        x_axis_label_y_coordinate = @graph_bottom + LABEL_MARGIN * 2 + calculate_bottom_labels_height
 
         # TODO Center between graph area
         @d.fill = @font_color
@@ -1158,6 +1155,12 @@ module Gruff
         label_width = calculate_width(@marker_font_size, label_text)
         label_width * Math.cos(deg2rad(@bottom_label_rotation))
       end
+    end
+
+    def calculate_bottom_labels_height
+      labels.values.map do |value|
+        calculate_bottom_label_height(value)
+      end.max || 0
     end
 
     # Used for degree => radian conversions
