@@ -873,7 +873,13 @@ module Gruff
                                   1.0, 1.0,
                                   x_offset, y_offset,
                                   label_text, @scale)
-          @d.rotation = -@bottom_label_rotation if @bottom_label_rotation != 0
+          if @bottom_label_rotation != 0
+            @d.rotation = -@bottom_label_rotation
+
+            # Draw tick line.
+            @d = @d.fill(@marker_color)
+            @d.line(x_offset.round, @graph_bottom, x_offset.round, @graph_bottom + 10)
+          end
         end
         @labels_seen[index] = 1
         debug { @d.line 0.0, y_offset, @raw_columns, y_offset }
