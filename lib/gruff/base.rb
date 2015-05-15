@@ -865,9 +865,13 @@ module Gruff
           @d.font_weight = NormalWeight
           @d.pointsize = scale_fontsize(@marker_font_size)
           @d.gravity = NorthGravity
+
+          tick_x_offset = x_offset.round
+
           if @bottom_label_rotation != 0
             @d.rotation = @bottom_label_rotation
             y_offset += calculate_bottom_label_height(label_text) / 2.0
+            x_offset -= calculate_bottom_label_width(label_text) / 2.0
           end
           @d = @d.annotate_scaled(@base_image,
                                   1.0, 1.0,
@@ -878,7 +882,7 @@ module Gruff
 
             # Draw tick line.
             @d = @d.fill(@marker_color)
-            @d.line(x_offset.round, @graph_bottom, x_offset.round, @graph_bottom + 10)
+            @d.line(tick_x_offset, @graph_bottom, tick_x_offset, @graph_bottom + 10)
           end
         end
         @labels_seen[index] = 1
@@ -1159,8 +1163,13 @@ module Gruff
         @marker_caps_height
       else
         label_width = calculate_width(@marker_font_size, label_text)
-        label_width * Math.cos(deg2rad(@bottom_label_rotation))
+        (label_width * Math.cos(deg2rad(90 - @bottom_label_rotation))).abs
       end
+    end
+
+    def calculate_bottom_label_width(label_text)
+      label_width = calculate_width(@marker_font_size, label_text)
+      (label_width * Math.sin(deg2rad(90 - @bottom_label_rotation))).abs
     end
 
     def calculate_bottom_labels_height
